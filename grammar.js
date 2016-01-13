@@ -55,11 +55,11 @@ module.exports = (function() {
         peg$c8 = function(value) {
           return value;
         },
-        peg$c9 = function(number) {
+        peg$c9 = function() {
           return {
             type: 'number',
             location: location(),
-            data: parseFloat(number),
+            data: parseFloat(text()),
           };
         },
         peg$c10 = "\"",
@@ -474,7 +474,7 @@ module.exports = (function() {
       }
       if (s1 !== peg$FAILED) {
         peg$savedPos = s0;
-        s1 = peg$c9(s1);
+        s1 = peg$c9();
       }
       s0 = s1;
 

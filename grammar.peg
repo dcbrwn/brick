@@ -22,11 +22,11 @@ value = _ value:(number / string / block / symbol) _ {
   return value;
 }
 
-number = number:digit+ {
+number = digit+ {
   return {
     type: 'number',
     location: location(),
-    data: parseFloat(number),
+    data: parseFloat(text()),
   };
 }
 

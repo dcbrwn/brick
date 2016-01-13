@@ -32,7 +32,6 @@ function compileExpression(expr) {
   let tokens = expr.data;
   let operators = [];
   let operands = [];
-  let result = [];
 
   function flush(priority) {
     while (operators.length > 0) {
@@ -52,7 +51,7 @@ function compileExpression(expr) {
   }
 
   tokens.forEach((token) => {
-    if (token.atom && token.atom.meta.infix) {
+    if (token.atom && token.atom.meta && token.atom.meta.infix) {
       flush(token.atom.meta.priority);
       operators.push(token);
     } else {
@@ -62,12 +61,13 @@ function compileExpression(expr) {
 
   flush();
 
-  return operands[0];
-  return {
-    type: 'expression',
-    location: expr.location,
-    data: operands,
-  };
+  return operands.length === 1
+    ? operands[0]
+    : {
+      type: 'expression',
+      location: expr.location,
+      data: operands,
+    };
 }
 
 function evalToken(token, context) {
@@ -83,26 +83,32 @@ function evalToken(token, context) {
     case 'string':
       return token;
     default:
-      console.log(token);
       throw new Error('Invalid token');
   }
 }
 
-function evalExpression(expr, context) {
+function evalExpression(expr, context, blockParams) {
+  if (!context) {
+    throw new Error('Invalid context');
+  }
+
   populateBindings(expr, context);
   let compiled = compileExpression(expr, context);
   let form = evalToken(compiled.data[0]);
 
   let params = compiled.data.slice(1);
 
-  if (!form.meta.special) {
+  if (form.meta && !form.meta.special) {
     params = params.map((param) => evalToken(param, context));
   }
 
   if (form.type === 'block') {
-    return evalBlock(form, context, params);
+    return evalBlock(form, params);
   } else if (form.type === 'native') {
-    return form.data.apply(context, params);
+    return form.data.apply({
+      context: context,
+      params: blockParams,
+    }, params);
   } else {
     throw new Error('Invalid form type');
   }
@@ -113,7 +119,7 @@ function evalBlock(block, params) {
   let result;
 
   expressions.forEach((expr) => {
-    result = evalExpression(expr, block.context);
+    result = evalExpression(expr, block.context, params);
   });
 
   return result;
@@ -145,6 +151,27 @@ const rootContext = {
           type: 'number',
           data: a.data * b.data,
         };
+      },
+    },
+    'def': {
+      type: 'native',
+      meta: {
+        special: true,
+      },
+      data(symbol, value) {
+        this.context.bindings[symbol.data] = evalToken(value, this.context);
+      },
+    },
+    'in': {
+      type: 'native',
+      meta: {
+        special: true,
+      },
+      data() {
+        for (let i = 0, len = arguments.length; i < len; i += 1) {
+          let symbol = arguments[i];
+          this.context.bindings[symbol.data] = this.params[i];
+        }
       },
     },
   },
