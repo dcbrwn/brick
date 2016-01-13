@@ -1,6 +1,12 @@
-def double {
-  in a;
-  a + a;
-};
+def a 1;
 
-double 10;
+cond
+  (a > 50) {
+    return 10;
+  }
+  (a > 10) {
+    return 20;
+  }
+  1 {
+    return 30;
+  };

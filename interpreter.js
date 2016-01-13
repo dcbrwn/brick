@@ -78,6 +78,7 @@ function evalToken(token, context) {
       return token.atom;
     case 'block':
       token.context = createContext(context);
+      token.meta = {};
       return token;
     case 'number':
     case 'string':
@@ -96,9 +97,15 @@ function evalExpression(expr, context, blockParams) {
   let compiled = compileExpression(expr, context);
   let form = evalToken(compiled.data[0]);
 
+  if (compiled.data.length === 1 && ['block', 'native'].indexOf(form.type) === -1) {
+    return form;
+  }
+
   let params = compiled.data.slice(1);
 
-  if (form.meta && !form.meta.special) {
+  form.meta = form.meta || {};
+
+  if (!form.meta.special) {
     params = params.map((param) => evalToken(param, context));
   }
 
@@ -153,6 +160,19 @@ const rootContext = {
         };
       },
     },
+    '>': {
+      type: 'native',
+      meta: {
+        infix: true,
+        priority: 10,
+      },
+      data(a, b) {
+        return {
+          type: 'number',
+          data: a.data > b.data,
+        };
+      },
+    },
     'def': {
       type: 'native',
       meta: {
@@ -174,6 +194,30 @@ const rootContext = {
         }
       },
     },
+    'lang.setAtomMetadata': {
+      type: 'native',
+      data(atom, key, value) {
+        atom.meta[key.data] = value.data;
+        return atom;
+      },
+    },
+    'cond': {
+      type: 'native',
+      data() {
+        for (let i = 0, len = arguments.length; i < len; i += 2) {
+          console.log(arguments[i]);
+          if (arguments[i].data) {
+            return evalBlock(arguments[i + 1]);
+          }
+        }
+      },
+    },
+    'return': {
+      type: 'native',
+      data(value) {
+        return value;
+      },
+    }
   },
 };
 
