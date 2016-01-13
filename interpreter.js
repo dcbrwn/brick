@@ -128,7 +128,10 @@ const rootContext = {
         priority: 2,
       },
       data(a, b) {
-        return a.data + b.data;
+        return {
+          type: 'number',
+          data: a.data + b.data,
+        };
       },
     },
     '*': {
@@ -138,8 +141,10 @@ const rootContext = {
         priority: 1,
       },
       data(a, b) {
-        console.log(a.data, b.data)
-        return a.data * b.data;
+        return {
+          type: 'number',
+          data: a.data * b.data,
+        };
       },
     },
   },
