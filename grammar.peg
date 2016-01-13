@@ -1,0 +1,62 @@
+program = statement*
+
+statement = expr:expression separator {
+  return expr;
+}
+
+separator = _ ';' _
+
+expression = expr:(value / group)* {
+  return {
+    type: 'expression',
+    location: location(),
+    data: expr,
+  };
+}
+
+group = '(' expr:expression ')' {
+  return expr;
+}
+
+value = _ value:(number / string / block / symbol) _ {
+  return value;
+}
+
+number = number:digit+ {
+  return {
+    type: 'number',
+    location: location(),
+    data: parseFloat(number),
+  };
+}
+
+string = '"' string:[^"]* '"' {
+  return {
+    type: 'string',
+    location: location(),
+    data: string.join(''),
+  };
+}
+
+block = '{' block:program '}' {
+  return {
+    type: 'block',
+    location: location(),
+    data: block,
+  };
+}
+
+symbol = (!digit character)+ {
+  return {
+    type: 'symbol',
+    location: location(),
+    data: text(),
+  };
+}
+
+_ = whitespace*
+
+whitespace = [ \t\n\r]
+punctuation = [(){};"]
+digit = [0-9]
+character = !whitespace !punctuation .
