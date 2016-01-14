@@ -11,7 +11,8 @@ function createContext(parent) {
   };
 }
 
-function getBindingValue(name, context) {
+function getBindingValue(startContext, name) {
+  let context = startContext;
   while (context) {
     if (typeof context.bindings[name] !== 'undefined') {
       return context.bindings[name];
@@ -20,10 +21,24 @@ function getBindingValue(name, context) {
   }
 }
 
-function populateBindings(expr, context) {
+function getBindingContext(startContext, name) {
+  let context = startContext;
+  while (context) {
+    if (typeof context.bindings[name] !== 'undefined') {
+      return context;
+    }
+    context = context.parent;
+  }
+}
+
+function setBindingValue(context, name, value) {
+  context.bindings[name] = value;
+}
+
+function populateBindings(context, expr) {
   expr.data.forEach((token) => {
     if (token.type === 'symbol') {
-      token.atom = getBindingValue(token.data, context);
+      token.atom = getBindingValue(context, token.data);
     }
   });
 }
@@ -66,10 +81,10 @@ function compileExpression(expr) {
   return isSimple ? expr : operands[0];
 }
 
-function evalToken(token, context) {
+function evalToken(context, token) {
   switch (token.type) {
     case 'expression':
-      return evalExpression(token, context);
+      return evalExpression(context, token);
     case 'symbol':
       return token.atom;
     case 'block':
@@ -84,14 +99,14 @@ function evalToken(token, context) {
   }
 }
 
-function evalExpression(expr, context, blockParams) {
+function evalExpression(context, expr, blockParams) {
   if (!context) {
     throw new Error('Invalid context');
   }
 
-  populateBindings(expr, context);
+  populateBindings(context, expr);
   let compiled = compileExpression(expr, context);
-  let form = evalToken(compiled.data[0]);
+  let form = evalToken(context, compiled.data[0]);
 
   if (compiled.data.length === 1 && ['block', 'native'].indexOf(form.type) === -1) {
     return form;
@@ -102,7 +117,7 @@ function evalExpression(expr, context, blockParams) {
   form.meta = form.meta || {};
 
   if (!form.meta.special) {
-    params = params.map((param) => evalToken(param, context));
+    params = params.map((param) => evalToken(context, param));
   }
 
   if (form.type === 'block') {
@@ -122,7 +137,7 @@ function evalBlock(block, params) {
   let result;
 
   expressions.forEach((expr) => {
-    result = evalExpression(expr, block.context, params);
+    result = evalExpression(block.context, expr, params);
   });
 
   return result;
@@ -130,4 +145,8 @@ function evalBlock(block, params) {
 
 module.exports = {
   eval: evalBlock,
+  evalToken,
+  getBindingValue,
+  setBindingValue,
+  getBindingContext,
 };

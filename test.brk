@@ -1,3 +1,23 @@
 #!/bin/env brick
 
-cond 1 { 10; };
+define true 1;
+
+define pow {
+  in base power;
+  define result base;
+  define rec {
+    in counter;
+    cond
+      (counter == power) {
+        result;
+      }
+      true {
+        result = result * base;
+        rec (counter + 1);
+      };
+  };
+
+  rec 1;
+};
+
+pow 2 5;

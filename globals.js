@@ -14,35 +14,53 @@ function registerFunction(name, meta, func) {
   };
 }
 
-registerFunction('+', { infix: true, priority: 4 }, function(a, b) {
+registerFunction('+', { infix: true, priority: 6 }, function(a, b) {
   return {
     type: 'number',
     data: a.data + b.data,
   };
 });
 
-registerFunction('*', { infix: true, priority: 4 }, function(a, b) {
+registerFunction('*', { infix: true, priority: 5 }, function(a, b) {
   return {
     type: 'number',
     data: a.data * b.data,
   };
 });
 
-registerFunction('>', { infix: true, priority: 4 }, function(a, b) {
+registerFunction('>', { infix: true, priority: 8 }, function(a, b) {
   return {
     type: 'number',
     data: a.data > b.data,
   };
 });
 
-registerFunction('def', { special: true }, function(symbol, value) {
-  this.context.bindings[symbol.data] = evalToken(value, this.context);
+registerFunction('define', { special: true }, function(symbol, value) {
+  const evaluated = interpreter.evalToken(this.context, value);
+  interpreter.setBindingValue(this.context, symbol.data, evaluated);
+});
+
+registerFunction('=', { infix: true, priority: 15, special: true }, function(symbol, value) {
+  const name = symbol.data;
+  const context = interpreter.getBindingContext(this.context, name);
+  const evaluated = interpreter.evalToken(this.context, value);
+
+  if (context) {
+    interpreter.setBindingValue(context, name, evaluated);
+  }
+});
+
+registerFunction('==', { infix: true, priority: 15 }, function(a, b) {
+  return {
+    type: 'number',
+    data: +(a.data === b.data),
+  };
 });
 
 registerFunction('in', { special: true }, function() {
   for (let i = 0, len = arguments.length; i < len; i += 1) {
     let symbol = arguments[i];
-    this.context.bindings[symbol.data] = this.params[i];
+    interpreter.setBindingValue(this.context, symbol.data, this.params[i]);
   }
 });
 
@@ -57,4 +75,8 @@ registerFunction('cond', null, function() {
       return interpreter.eval(arguments[i + 1]);
     }
   }
+});
+
+registerFunction('print', null, function() {
+  console.log(arguments);
 });
