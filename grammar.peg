@@ -1,10 +1,8 @@
 program = statement*
 
-statement = expr:expression separator {
+statement = _ expr:expression _ ';' _ {
   return expr;
 }
-
-separator = _ ';' _
 
 expression = expr:(value / group)* {
   return {
@@ -46,7 +44,7 @@ block = '{' block:program '}' {
   };
 }
 
-symbol = (!digit character)+ {
+symbol = !digit character+ {
   return {
     type: 'symbol',
     location: location(),
@@ -54,9 +52,12 @@ symbol = (!digit character)+ {
   };
 }
 
-_ = whitespace*
+_ = comment / padding
+
+comment = padding '#' [^\n]+ [\n]
+padding = whitespace*
 
 whitespace = [ \t\n\r]
-punctuation = [(){};"]
+punctuation = [(){};"#]
 digit = [0-9]
 character = !whitespace !punctuation .

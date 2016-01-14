@@ -30,6 +30,7 @@ function populateBindings(expr, context) {
 
 function compileExpression(expr) {
   let tokens = expr.data;
+  let isSimple = true;
   let operators = [];
   let operands = [];
 
@@ -39,19 +40,20 @@ function compileExpression(expr) {
         break;
       }
 
+      let form = operators.pop();
+      let param2 = operands.pop();
+      let param1 = operands.pop();
+
       operands.push({
         type: 'expression',
-        data: [
-          operators.pop(),
-          operands.pop(),
-          operands.pop(),
-        ],
+        data: [ form, param1, param2 ],
       });
     }
   }
 
   tokens.forEach((token) => {
     if (token.atom && token.atom.meta && token.atom.meta.infix) {
+      isSimple = false;
       flush(token.atom.meta.priority);
       operators.push(token);
     } else {
@@ -61,13 +63,7 @@ function compileExpression(expr) {
 
   flush();
 
-  return operands.length === 1
-    ? operands[0]
-    : {
-      type: 'expression',
-      location: expr.location,
-      data: operands,
-    };
+  return isSimple ? expr : operands[0];
 }
 
 function evalToken(token, context) {
@@ -132,103 +128,6 @@ function evalBlock(block, params) {
   return result;
 }
 
-const rootContext = {
-  bindings: {
-    '+': {
-      type: 'native',
-      meta: {
-        infix: true,
-        priority: 2,
-      },
-      data(a, b) {
-        return {
-          type: 'number',
-          data: a.data + b.data,
-        };
-      },
-    },
-    '*': {
-      type: 'native',
-      meta: {
-        infix: true,
-        priority: 1,
-      },
-      data(a, b) {
-        return {
-          type: 'number',
-          data: a.data * b.data,
-        };
-      },
-    },
-    '>': {
-      type: 'native',
-      meta: {
-        infix: true,
-        priority: 10,
-      },
-      data(a, b) {
-        return {
-          type: 'number',
-          data: a.data > b.data,
-        };
-      },
-    },
-    'def': {
-      type: 'native',
-      meta: {
-        special: true,
-      },
-      data(symbol, value) {
-        this.context.bindings[symbol.data] = evalToken(value, this.context);
-      },
-    },
-    'in': {
-      type: 'native',
-      meta: {
-        special: true,
-      },
-      data() {
-        for (let i = 0, len = arguments.length; i < len; i += 1) {
-          let symbol = arguments[i];
-          this.context.bindings[symbol.data] = this.params[i];
-        }
-      },
-    },
-    'lang.setAtomMetadata': {
-      type: 'native',
-      data(atom, key, value) {
-        atom.meta[key.data] = value.data;
-        return atom;
-      },
-    },
-    'cond': {
-      type: 'native',
-      data() {
-        for (let i = 0, len = arguments.length; i < len; i += 2) {
-          console.log(arguments[i]);
-          if (arguments[i].data) {
-            return evalBlock(arguments[i + 1]);
-          }
-        }
-      },
-    },
-    'return': {
-      type: 'native',
-      data(value) {
-        return value;
-      },
-    }
-  },
-};
-
-function evalProgram(tree, options) {
-  return evalBlock({
-    type: 'block',
-    data: tree,
-    context: rootContext,
-  });
-}
-
 module.exports = {
-  evalProgram,
+  eval: evalBlock,
 };

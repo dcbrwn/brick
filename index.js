@@ -1,14 +1,22 @@
 'use strict';
 
-var fs = require('fs');
+const fs = require('fs');
 
-var grammar = require('./grammar.js');
-var interpreter = require('./interpreter.js');
+const grammar = require('./grammar.js');
+const interpreter = require('./interpreter');
+const globals = require('./globals');
+
+function evalProgram(tree, options) {
+  return interpreter.eval({
+    type: 'block',
+    data: tree,
+    context: require('./globals'),
+  });
+}
 
 fs.readFile(process.argv[2], (err, data) => {
   let tree = grammar.parse(data.toString());
-  let result = interpreter.evalProgram(tree);
+  let result = evalProgram(tree);
   console.log(result);
   process.exit(0);
 });
-
