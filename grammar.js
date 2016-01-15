@@ -81,6 +81,7 @@ module.exports = (function() {
           return {
             type: 'block',
             location: location(),
+            meta: {},
             data: block,
           };
         },
@@ -580,23 +581,20 @@ module.exports = (function() {
       var s0, s1, s2, s3;
 
       s0 = peg$currPos;
-      s1 = peg$currPos;
-      peg$silentFails++;
-      s2 = peg$parsedigit();
-      peg$silentFails--;
-      if (s2 === peg$FAILED) {
-        s1 = void 0;
-      } else {
-        peg$currPos = s1;
-        s1 = peg$FAILED;
-      }
+      s1 = peg$parsecharacter();
       if (s1 !== peg$FAILED) {
         s2 = [];
-        s3 = peg$parsecharacter();
+        s3 = peg$parsedigit();
+        if (s3 === peg$FAILED) {
+          s3 = peg$parsecharacter();
+        }
         if (s3 !== peg$FAILED) {
           while (s3 !== peg$FAILED) {
             s2.push(s3);
-            s3 = peg$parsecharacter();
+            s3 = peg$parsedigit();
+            if (s3 === peg$FAILED) {
+              s3 = peg$parsecharacter();
+            }
           }
         } else {
           s2 = peg$FAILED;

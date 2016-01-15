@@ -88,8 +88,7 @@ function evalToken(context, token) {
     case 'symbol':
       return token.atom;
     case 'block':
-      token.context = createContext(context);
-      token.meta = {};
+      token.parentContext = context;
       return token;
     case 'number':
     case 'string':
@@ -114,8 +113,6 @@ function evalExpression(context, expr, blockParams) {
 
   let params = compiled.data.slice(1);
 
-  form.meta = form.meta || {};
-
   if (!form.meta.special) {
     params = params.map((param) => evalToken(context, param));
   }
@@ -133,11 +130,12 @@ function evalExpression(context, expr, blockParams) {
 }
 
 function evalBlock(block, params) {
-  let expressions = block.data;
+  const expressions = block.data;
+  const context = createContext(block.parentContext);
   let result;
 
   expressions.forEach((expr) => {
-    result = evalExpression(block.context, expr, params);
+    result = evalExpression(context, expr, params);
   });
 
   return result;

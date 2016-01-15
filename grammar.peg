@@ -1,10 +1,10 @@
-program = statement*
+program 'program' = statement*
 
-statement = _ expr:expression _ ';' _ {
+statement 'statement' = _ expr:expression _ ';' _ {
   return expr;
 }
 
-expression = expr:(value / group)* {
+expression 'expression' = expr:(value / group)* {
   return {
     type: 'expression',
     location: location(),
@@ -12,15 +12,15 @@ expression = expr:(value / group)* {
   };
 }
 
-group = '(' expr:expression ')' {
+group 'group' = '(' expr:expression ')' {
   return expr;
 }
 
-value = _ value:(number / string / block / symbol) _ {
+value 'value' = _ value:(number / string / block / symbol) _ {
   return value;
 }
 
-number = digit+ {
+number 'number' = digit+ {
   return {
     type: 'number',
     location: location(),
@@ -28,7 +28,7 @@ number = digit+ {
   };
 }
 
-string = '"' string:[^"]* '"' {
+string 'string' = '"' string:[^"]* '"' {
   return {
     type: 'string',
     location: location(),
@@ -36,15 +36,16 @@ string = '"' string:[^"]* '"' {
   };
 }
 
-block = '{' block:program '}' {
+block 'block' = '{' block:program '}' {
   return {
     type: 'block',
     location: location(),
+    meta: {},
     data: block,
   };
 }
 
-symbol = !digit character+ {
+symbol 'symbol' = character (digit / character)+ {
   return {
     type: 'symbol',
     location: location(),
@@ -54,10 +55,10 @@ symbol = !digit character+ {
 
 _ = comment / padding
 
-comment = padding '#' [^\n]+ [\n]
+comment 'comment' = padding '#' [^\n]+ [\n]
 padding = whitespace*
 
 whitespace = [ \t\n\r]
 punctuation = [(){};"#]
 digit = [0-9]
-character = !whitespace !punctuation .
+character = !whitespace !punctuation !digit .
