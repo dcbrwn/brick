@@ -1,11 +1,11 @@
 #!/bin/env brick
 
-define true 1;
+let true 1;
 
-define pow {
+let ^ (operator 2 {
   in base power;
-  define result base;
-  define rec {
+  let result base;
+  let rec {
     in counter;
     cond
       (counter == power) {
@@ -18,6 +18,6 @@ define pow {
   };
 
   rec 1;
-};
+});
 
-pow 2 5;
+2 ^ 5;

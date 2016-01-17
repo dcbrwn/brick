@@ -45,7 +45,7 @@ block 'block' = '{' block:program '}' {
   };
 }
 
-symbol 'symbol' = character (digit / character)+ {
+symbol 'symbol' = character (digit / character)* {
   return {
     type: 'symbol',
     location: location(),

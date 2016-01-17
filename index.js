@@ -10,7 +10,7 @@ function evalProgram(tree, options) {
   return interpreter.eval({
     type: 'block',
     data: tree,
-    context: require('./globals'),
+    parentContext: require('./globals'),
   });
 }
 
